@@ -2,7 +2,7 @@ import re
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from datetime import date, timedelta, timezone, datetime
-from django.core.validators import validate_email
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 

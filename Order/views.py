@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from datetime import timedelta, timezone, datetime
-from django.core.validators import validate_email
+
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 
@@ -21,7 +21,6 @@ from django.views.decorators.cache import never_cache, cache_control
 
 from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction
-
 from django.utils import timezone
 from Userapp.models import CustomUser,Wallet,Wallet_transaction
 from Userapp.urls import *
@@ -59,7 +58,7 @@ def initiate_payment(items):
         
 
 def Placed_order(request):
-    # try:
+    try:
         if request.method == "POST":
             try:
                 address_id = request.POST.get("address")
@@ -73,8 +72,7 @@ def Placed_order(request):
             
             payment_mode = request.POST.get("payment_method")
             
-            # payment_id = request.POST.get('payment_id')
-            # coupon_id = request.POST.get('coupon_id')
+            
             cart = Cart.objects.get(user=request.user)
             cart_items = CartItem.objects.filter(cart__user=request.user)
             if payment_mode == 'Cash On Delivery':
@@ -322,11 +320,11 @@ def Placed_order(request):
                 messages.error(request,'Wallet has insufficient funds')
         
         return redirect("checkout")
-    # except Exception as e :
-    #     print(e)
+    except Exception as e :
+        print(e)
         
-    #     messages.error(request,e)
-    #     return redirect("checkout")
+        messages.error(request,e)
+        return redirect("checkout")
        
         
 
