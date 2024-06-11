@@ -388,7 +388,9 @@ def shopdetails(request, p_id):
     
     data = Color_products.objects.get(id=p_id)
     products=Product.objects.get(id=data.product.id)
-
+    related_products = Color_products.objects.select_related("product").filter(product__catagory=data.product.catagory).distinct("product")[:4]
+        
+    print(related_products)
     item = Color_products.objects.filter(product=data.product.id, is_listed=True)
     total_quantity = data.size.aggregate(total_quantity=Sum("quantity"))["total_quantity"] or 0
     
@@ -400,6 +402,7 @@ def shopdetails(request, p_id):
             "item": item,
             "total_quantity": total_quantity,
             # "final_price": final_price,
+            'related':related_products,
         },
     )
 

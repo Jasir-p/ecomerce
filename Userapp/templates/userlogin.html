@@ -1,4 +1,5 @@
 {% load static %}
+{% load socialaccount %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -58,7 +59,8 @@
                     <ol>
                       <li><i class="fa fa-facebook"></i></li>
                       
-                      <li><i class="fa fa-google-plus"></i></li>
+                      
+                      <li><a href="{% provider_login_url 'google' %}"><i class="fa fa-google-plus"></i></a></li>
                       
                       
                     </ol>

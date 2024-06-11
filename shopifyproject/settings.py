@@ -34,7 +34,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
+SITE_ID = 1
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,7 +48,28 @@ INSTALLED_APPS = [
     "cart",
     "Order",
     "Offer",
+    "django.contrib.sites",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+   
 ]
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+
+
+SOCIALACCOUNT_QUERY_EMAIL = True
+
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 
 MIDDLEWARE = [
@@ -62,6 +83,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "Userapp.middleware.Custom404Middleware",
+    'allauth.account.middleware.AccountMiddleware',
+    
 ]
 
 ROOT_URLCONF = "shopifyproject.urls"
@@ -173,3 +196,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "Userapp.CustomUser"
+
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
