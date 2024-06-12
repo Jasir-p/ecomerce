@@ -1,5 +1,7 @@
 from datetime import date, timedelta, timezone, datetime
 import http
+from django.views.decorators.csrf import csrf_protect,csrf_exempt
+import json
 from django.template.loader import render_to_string
 import re
 import time
@@ -414,7 +416,7 @@ def filterd(request):
         selected_brands = []
         sort = request.GET.get('option')
         page_number = request.GET.get('page')
-       
+                   
 
         # Ensure ordering is initialized
         ordering = 'product__price'
@@ -1028,3 +1030,26 @@ def generate_invoice(request, order_id):
     response['Content-Disposition'] = f'inline; filename=invoice_{order_id}.pdf'
 
     return response
+
+@login_required
+
+def add_phone(request):
+    
+    if request.method == 'POST':
+        try:
+            phone=request.POST.get("phone").strip()
+            if not phone:
+                messages.error(request, "Phone number not provided")
+                return redirect("view_address")
+            elif not validate_mobile_number(phone):
+                messages.error(request, 'Invalid phone number')
+                return redirect("view_address")
+
+            user = request.user
+            user.phone = phone
+            user.save()
+            return messages.success("Success")
+        except Exception as e:
+            messages.error(request,str(e))
+            return redirect("view_address")
+    

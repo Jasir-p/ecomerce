@@ -3,7 +3,6 @@
 
 {% load static %}
 <style>
-
     .profile-card {
         background: #fff;
         border: 1px solid #e5e5e5;
@@ -58,45 +57,50 @@
     }
 </style>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="path/to/sweetalert.min.js"></script>
-<script>
-    {% if messages %}
-    {% for message in messages %}
-    {% if message.tags == 'error' %}
-    swal("Error!", "{{ message }}", "error"); // Display error message with a warning icon
-    {% elif message.tags == 'success' %}
-    swal("Success!", "{{ message }}", "success"); // Display success message with a success icon
-    {% else %}
-    swal("Message", "{{ message }}"); // Display general message
-    {% endif %}
-    {% endfor %}
-    {% endif %}
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-  
-</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
+
 <section class="order-container container">
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script>
+        {% if messages %}
+        {% for message in messages %}
+        {% if message.tags == 'error' %}
+        swal("Error!", "{{ message|safe }}", "error"); // Display error message with a warning icon
+        {% elif message.tags == 'success' %}
+        swal("Success!", "{{ message|safe }}", "success"); // Display success message with a success icon
+        {% else %}
+        swal("Message", "{{ message|safe }}"); // Display general message
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+    </script>
     <div class="row">
         <div class="col-lg-3">
             <div class="card border-0 shadow rounded-lg">
                 <div class="card-body text-center">
-                    <img src="{% static 'img/profile-pic.jpg' %}" alt="Profile Picture" class="rounded-circle mb-3" width="150">
+                    <img src="{% static 'user/home/img/icon/user1.png' %}" alt="Profile Picture" class="rounded-circle mb-3" width="150">
                     <h4 class="text-uppercase mb-1">{{ user.username }}</h4>
                     <p class="text-muted font-size-sm">{{ user.email }}</p>
                     <div class="list-group list-group-flush mt-4">
                         <a href="{% url 'view_address' %}" class="list-group-item list-group-item-action border-0">
                             Profile Information
                         </a>
-                        <a href="{% url 'user_order'  %}" class="list-group-item list-group-item-action border-0">
+                        <a href="{% url 'user_order' %}" class="list-group-item list-group-item-action border-0">
                             Orders
                         </a>
-                        <a href="{% url 'changepassword'  %}" class="list-group-item list-group-item-action border-0">
+                        <a href="{% url 'changepassword' %}" class="list-group-item list-group-item-action border-0">
                             Change Password
                         </a>
                         <a href="{% url 'view_coupon' %}" class="list-group-item list-group-item-action border-0">
                             Coupons
                         </a>
                         <a href="{% url 'my_refarel' %}" class="list-group-item list-group-item-action border-0">
-                            My Refrals
+                            My Referrals
                         </a>
                         <a href="#" class="list-group-item list-group-item-action border-0">
                             Logout
@@ -105,55 +109,59 @@
                 </div>
             </div>
         </div>
-            <!-- End Sidebar -->
+        <!-- End Sidebar -->
 
-            <!-- Main Content -->
-            <div class="col-lg-9">
-                <div class="card border-0 shadow rounded-lg">
-                    <div class="card-body">
-                        <div class="profile-info">
-                            <h5 class="text-uppercase mb-4">Profile Information</h5>
-                            <p><strong>Name:</strong> {{ data.username }}</p>
-                            <p><strong>Email Address:</strong> {{ data.email }}</p>
-                            <p><strong>Contact:</strong> {{ data.phone }}</p>
-                            <p><strong>Role:</strong> User</p>
-                           
-                        </div>
-                    </div>
-                </div>
-                <div class="card mt-4 border-0 shadow rounded-lg">
-                    <div class="card-body">
-                        {% if Address %}
-                        {% for address in Address %}
-                        <div class="address-item border-bottom pb-3 mb-3">
-                            <p class="text-muted font-size-sm mb-0"><strong>Address Type:</strong> {{ address.address_type }}</p>
-                            <p class="mb-1"><strong>Address:</strong> {{ address.address }}</p>
-                            <p class="text-muted font-size-sm mb-1"><strong>House No:</strong> {{ address.House_no }}</p>
-                            <p class="text-muted font-size-sm mb-1"><strong>City:</strong> {{ address.city }}</p>
-                            <p class="text-muted font-size-sm mb-1"><strong>Pincode:</strong> {{ address.pincode }}</p>
-                            <p class="text-muted font-size-sm mb-1"><strong>State:</strong> {{ address.state }}</p>
-                            <p class="text-muted font-size-sm mb-1"><strong>Country:</strong> {{ address.country }}</p>
-                            <div class="d-flex justify-content-end">
-                                <a href="{% url 'edit_adress' address.id %}" class="btn btn-sm btn-info">Edit</a>
-                                <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-danger ml-2">Delete</a>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <p class="text-danger m-3">No Address Found</p>
-                        {% endif %}
-                        <a href="{% url 'add_address' %}" class="btn btn-primary mt-3">Add Address</a>
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow rounded-lg">
+                <div class="card-body">
+                    <div class="profile-info">
+                        <h5 class="text-uppercase mb-4">Profile Information</h5>
+                        <p><strong>Name:</strong> {{ user.username }}</p>
+                        <p><strong>Email Address:</strong> {{ user.email }}</p>
+                        <p><strong>Contact:</strong>
+                            {% if user.phone %}
+                                {{ user.phone }}
+                            {% else %}
+                                No
+                                <form id="phoneForm" method="POST" action="{% url 'add_number'  %}">
+                                    {% csrf_token %}
+                                    <input type="text" id="phoneInput" name="phone" placeholder="Enter your mobile number">
+                                    <button type="submit" id="savePhoneBtn" class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                            {% endif %}
+                        </p>
+                        <p><strong>Role:</strong> User</p>
                     </div>
                 </div>
             </div>
-            <!-- End Main Content -->
+            <div class="card mt-4 border-0 shadow rounded-lg">
+                <div class="card-body">
+                    {% if Address %}
+                    {% for address in Address %}
+                    <div class="address-item border-bottom pb-3 mb-3">
+                        <p class="text-muted font-size-sm mb-0"><strong>Address Type:</strong> {{ address.address_type }}</p>
+                        <p class="mb-1"><strong>Address:</strong> {{ address.address }}</p>
+                        <p class="text-muted font-size-sm mb-1"><strong>House No:</strong> {{ address.House_no }}</p>
+                        <p class="text-muted font-size-sm mb-1"><strong>City:</strong> {{ address.city }}</p>
+                        <p class="text-muted font-size-sm mb-1"><strong>Pincode:</strong> {{ address.pincode }}</p>
+                        <p class="text-muted font-size-sm mb-1"><strong>State:</strong> {{ address.state }}</p>
+                        <p class="text-muted font-size-sm mb-1"><strong>Country:</strong> {{ address.country }}</p>
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'edit_adress' address.id %}" class="btn btn-sm btn-info">Edit</a>
+                            <a href="{% url 'delete_address' address.id %}" class="btn btn-sm btn-danger ml-2">Delete</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <p class="text-danger m-3">No Address Found</p>
+                    {% endif %}
+                    <a href="{% url 'add_address' %}" class="btn btn-primary mt-3">Add Address</a>
+                </div>
+            </div>
         </div>
+        <!-- End Main Content -->
     </div>
 </section>
-
-<!-- WhatsApp Share Modal -->
-
-
-
 
 {% endblock %}

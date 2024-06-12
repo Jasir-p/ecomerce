@@ -41,4 +41,5 @@ urlpatterns = [
     path('Resendotppassword/',views.resend_otp_password,name="resend_otp_password"),
     path("PasswordSection/",views.set_password,name='password_section'),
     path('invoice/<int:order_id>/', views.generate_invoice, name='generate_invoice'),
+    path('AddNumber/',views.add_phone,name="add_number"),
 ]
