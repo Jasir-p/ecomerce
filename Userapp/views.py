@@ -359,19 +359,15 @@ def generate_unique_transaction_id():
 @never_cache
 @login_required(login_url="login")
 def shop(request):
-
     try:
-        Get all Color_products and order them by 'id' (or another field)
+        # Get all Color_products and order them by 'id' (or another field)
         products = (
-        Color_products.objects
-        .select_related("product")
-        .filter(is_listed=True)
-        .order_by('product__id')  # Ensure this matches the distinct field
-        .distinct('product__id')
-    )
-       
- 
-        
+            Color_products.objects
+            .select_related("product")
+            .filter(is_listed=True)
+            .order_by('product__id')  # Ensure this matches the distinct field
+            .distinct('product__id')
+        )
 
         page_number = request.GET.get('page')
         paginator = Paginator(products, 9)  # Show 9 products per page
