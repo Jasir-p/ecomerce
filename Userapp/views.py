@@ -369,7 +369,8 @@ def shop(request):
     #     .order_by('product__id')  # Ensure this matches the distinct field
     #     .distinct('product__id')
     # )
-        products=Color_products.objects.filter(is_listed=True).order_by('product__id').distinct('product__id')
+        # 
+        products = Color_products.objects.filter(is_listed=True)
  
         print(products)
 
