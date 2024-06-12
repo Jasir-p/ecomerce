@@ -371,7 +371,7 @@ def shop(request):
     )
        
  
-        print(products)
+        
 
         page_number = request.GET.get('page')
         paginator = Paginator(products, 9)  # Show 9 products per page
