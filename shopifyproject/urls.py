@@ -31,7 +31,7 @@ urlpatterns = [
     path("", include("cart.urls")),
     path("", include("Order.urls")),
     path("",include("Offer.urls")),
-    path("accounts/", include("allauth.urls")),
+    # path("accounts/", include("allauth.urls")),
 ]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

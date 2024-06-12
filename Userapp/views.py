@@ -1013,7 +1013,7 @@ def set_password(request):
 
 
 def generate_invoice(request, order_id):
-    # Fetch the order details
+
     order = get_object_or_404(Order, id=order_id)
 
     order_products = OrderProduct.objects.filter(order__id=order_id).exclude(status__in=['Cancelled', 'Returned'])
@@ -1021,11 +1021,9 @@ def generate_invoice(request, order_id):
     totel_amount=order_products.annotate(totel_price=F('quantity')* F('price')).aggregate(totel_sum=Sum('totel_price'))['totel_sum'] or 0
     html_string = render_to_string('invoice_template.html', {'order': order,'totel_amount':totel_amount})
 
-    # Generate PDF from HTML
     html = HTML(string=html_string)
     pdf = html.write_pdf()
 
-    # Create a response object
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'inline; filename=invoice_{order_id}.pdf'
 
