@@ -361,15 +361,16 @@ def generate_unique_transaction_id():
 def shop(request):
 
     try:
+        # Get all Color_products and order them by 'id' (or another field)
         products = (
             Color_products.objects.select_related("product")
             .filter(is_listed=True)
             .distinct("product")
+            .order_by('product__id')  # or any other field you prefer
         )
 
-
         page_number = request.GET.get('page')
-        paginator = Paginator(products, 9) 
+        paginator = Paginator(products, 9)  # Show 9 products per page
         page_obj = paginator.get_page(page_number)
 
         category = Catagory.objects.filter(is_listed=True)
