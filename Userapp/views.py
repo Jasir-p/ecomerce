@@ -361,16 +361,15 @@ def generate_unique_transaction_id():
 def shop(request):
 
     try:
-        # Get all Color_products and order them by 'id' (or another field)
-    #     products = (
-    #     Color_products.objects
-    #     .select_related("product")
-    #     .filter(is_listed=True)
-    #     .order_by('product__id')  # Ensure this matches the distinct field
-    #     .distinct('product__id')
-    # )
-        # 
-        products = Color_products.objects.filter(is_listed=True)
+        Get all Color_products and order them by 'id' (or another field)
+        products = (
+        Color_products.objects
+        .select_related("product")
+        .filter(is_listed=True)
+        .order_by('product__id')  # Ensure this matches the distinct field
+        .distinct('product__id')
+    )
+       
  
         print(products)
 
