@@ -362,7 +362,14 @@ def shop(request):
 
     try:
         # Get all Color_products and order them by 'id' (or another field)
-        products = Color_products.objects.select_related("product").filter(is_listed=True).distinct("product").order_by('product__id')  # or any other field you prefer
+        products = (
+        Color_products.objects
+        .select_related("product")
+        .filter(is_listed=True)
+        .order_by('product__id')  # Ensure this matches the distinct field
+        .distinct('product__id')
+    )
+ 
         print(products)
 
         page_number = request.GET.get('page')
