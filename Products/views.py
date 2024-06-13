@@ -166,7 +166,7 @@ def add_size(request, id):
                 size_instance.save()
 
                 
-                return redirect(product_variant,id)
+                return redirect(product_variant,color_products.product.id)
 
             return render(request, "add_size.html", {"color_products": color_products})
         except Exception as e:
