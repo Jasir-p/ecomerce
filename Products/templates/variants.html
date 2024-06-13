@@ -86,7 +86,7 @@
                         {% endif %}
                         <td>
                             <div class="btn-group">
-                                <a class="btn btn-primary edit-link" href="#"><i class="fas fa-edit"></i> Edit</a>
+                                <a class="btn btn-primary edit-link" href="{% url 'editproduct' product.id %}"><i class="fas fa-edit"></i> Edit</a>
                                 <a class="btn btn-danger remove" href="{% url 'unlist_variant' product.id %}"><i class="fas fa-trash-alt"></i> Unlist</a>
                                 <a class="btn btn-info" href="{% url 'addsize' product.id %}"><i class="fas fa-plus"></i> Add Size</a>
                             </div>

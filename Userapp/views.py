@@ -1047,7 +1047,7 @@ def add_phone(request):
             user = request.user
             user.phone = phone
             user.save()
-            return messages.success("Success")
+            return messages.success(request,"Success")
         except Exception as e:
             messages.error(request,str(e))
             return redirect("view_address")
