@@ -8,7 +8,7 @@
     <meta name="keywords" content="Male_Fashion, unica, creative, html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>HipHopz</title>
+    <title>HipHop Fashion </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-xmXMBqv2JLbG27Pz69gHv04UPG4e1ByQDE4C8VBUbPZD13F8Uhtn5yJpCdwi+5wQf3z1B/WoGiMOg2RkTX+/qg==" crossorigin="anonymous" />
 
     <!-- Google Font -->
@@ -62,24 +62,19 @@
             </div>
             
         </div>
-        
+        <div class="offcanvas__nav__option">
+            {% if user.is_authenticated %}
+            <a href=" "class="search-switch"><img src="{% static 'user/home/img/icon/search.png' %}" alt=""></a>
+            <a href="{% url 'wishlist' %}"><img src="{% static 'user/home/img/icon/heart.png' %}" alt=""></a>
+            <a href="{% url 'viewcart'%}"><img src="{% static 'user/home/img/icon/cart.png' %}" alt=""> <span></span></a>
+                        
+            <a href="{% url 'wallet'%}"><img src="{% static 'user/home/img/icon/wallet.png' %}" alt=""> <span></span></a>
+            {% endif %}
+        </div>
         <div id="mobile-menu-wrap"></div>
         <div class="offcanvas__text">
             <p>Free shipping above 3000, 30-day return or refund guarantee.</p>
         </div>
-        {% if user.is_authenticated %}
-        <div class="col-lg-3 col-md-4">
-            <div class="header__nav__option">
-                
-                <a href=" "class="search-switch"><img src="{% static 'user/home/img/icon/search.png' %}" alt=""></a>
-                <a href="{% url 'wishlist' %}"><img src="{% static 'user/home/img/icon/heart.png' %}" alt=""></a>
-                <a href="{% url 'viewcart'%}"><img src="{% static 'user/home/img/icon/cart.png' %}" alt=""> <span></span></a>
-                
-                <a href="{% url 'wallet'%}"><img src="{% static 'user/home/img/icon/wallet.png' %}" alt=""> <span></span></a>
-               
-            </div>
-        </div>
-        {% endif %}
     </div>
     <!-- Offcanvas Menu End -->
 
