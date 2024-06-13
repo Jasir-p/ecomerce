@@ -48,7 +48,7 @@ def add_offer(request):
             discount_percentage = request.POST.get('discount_percentage')
             start_date = request.POST.get('start_date')
             end_date = request.POST.get('end_date')
-            print(offer_type,category_id,product_id,discount_percentage,start_date,end_date)
+            
             discount_percentage = int(discount_percentage)
             if discount_percentage <= 0:
                 messages.error(request, "Discount percentage must be positive")

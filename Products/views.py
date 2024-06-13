@@ -377,11 +377,7 @@ def edit_variant(request, id):
                 .exclude(id=variants.id)
                 .exists()
             ):
-                print(
-                    size_variant.objects.filter(
-                        Color_products__id=color_products.pk, size__iexact=size
-                    ).exclude(id=variants.id)
-                )
+                
                 messages.error(request, "The Size already exists")
                 return render(request, "edit_variant.html", {"variants": variants})
             elif size not in ["S", "M", "L", "XL", "XXL"]:

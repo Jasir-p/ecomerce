@@ -148,7 +148,7 @@ def user_home(request):
 def generate_otp_and_send_email(request, email):
     otp = random.randint(1000, 9999)
     otp_generated_at = datetime.now().isoformat()
-    print(otp)
+    
 
     request.session["otp"] = otp
     request.session["time"] = otp_generated_at
@@ -170,7 +170,7 @@ def otp(request):
         otp4 = request.POST.get("otp4")
 
         full_otp = otp1 + otp2 + otp3 + otp4
-        print("Full OTP entered:", full_otp)
+        
 
         if "otp" in request.session:
             otp = request.session["otp"]
@@ -178,21 +178,19 @@ def otp(request):
             delta = timedelta(minutes=2)
             time = datetime.fromisoformat(otp_generated)
 
-            print("Current time:", datetime.now())
-            print("OTP generated time:", time)
+            
             
             if datetime.now() <= time + delta:
-                print("OTP is within the valid time frame.")
+                
 
                 if int(full_otp) == otp:
-                    print("OTP is correct.")
+                    
 
                     try:
                         
-                        # print("Generated referral code:", referral_code)
-                        print('11')
+                        
                         ref=refreal_genarate()
-                        print(ref)
+                        
                         new_user = CustomUser.objects.create_user(
                             username=request.session["name"],
                             password=request.session["password"],
@@ -200,35 +198,35 @@ def otp(request):
                             phone=request.session["phone"],
                             referal_code=ref,
                         )
-                        print('11')
-                        print("New user created:", new_user)
+                        
+                        
                         refaral=request.session["refaral"]
                         if refaral:
 
                             Ref_user = CustomUser.objects.get(referal_code=request.session["refaral"])
-                            print("Referral user found:", Ref_user)
+                            
 
                             if Ref_user is not None:
                                 new_user_wallet = Wallet.objects.get(user=new_user)
-                                print("New user wallet found:", new_user_wallet)
+                                
                                 
                                 new_user_wallet.balance += 30
                                 new_user_wallet.save()
-                                print("New user wallet updated with referral deposit.")
+                                
 
                                 Wallet_transaction.objects.create(
                                     wallet=new_user_wallet,
                                     transaction_id=generate_unique_transaction_id(),
                                     referral_deposit=30
                                 )
-                                print("New user wallet transaction created.")
+                                
 
                                 ref_user_wallet = Wallet.objects.get(user=Ref_user)
-                                print("Referral user wallet found:", ref_user_wallet)
+                                
 
                                 ref_user_wallet.balance += 50
                                 ref_user_wallet.save()
-                                print("Referral user wallet updated with referral deposit.")
+                                
 
                                 Wallet_transaction.objects.create(
                                     wallet=ref_user_wallet,
@@ -241,7 +239,7 @@ def otp(request):
 
                                 )
 
-                                print("Referral user wallet transaction created.")
+                                
 
                         # Clean up session data
                         request.session.pop("name")
@@ -253,17 +251,17 @@ def otp(request):
                         return redirect("login")
 
                     except CustomUser.DoesNotExist:
-                        print("Referral user does not exist.")
+                        
                         messages.error(request, "Referral user does not exist.")
                         return redirect("otp")
 
                     except Wallet.DoesNotExist:
-                        print("Wallet does not exist for the user.")
+                        
                         messages.error(request, "Wallet does not exist for the user.")
                         return redirect("otp")
 
                     except Exception as e:
-                        print("Error occurred:", e)
+                        
                         messages.error(request, "An error occurred during registration. Please try again.")
                         return redirect("otp")
 
@@ -271,11 +269,11 @@ def otp(request):
                     messages.error(request, "Incorrect OTP! Please try again.")
                     return redirect("otp")
             else:
-                print("OTP has expired.")
+                
                 messages.error(request, "OTP has expired. Please request a new one.")
                 return redirect("otp")
         else:
-            print("OTP not found in session.")
+            
             messages.error(request, "OTP session has expired or not set. Please request a new one.")
             return redirect("otp")
     else:
@@ -308,7 +306,7 @@ def resend_otp(request):
 
     otp = random.randint(1000, 9999)
     otp_generated_at = datetime.now().isoformat()
-    print(otp)
+    
     
     request.session["otp"] = otp
     request.session["time"] = otp_generated_at
@@ -375,7 +373,7 @@ def shop(request):
 
         category = Catagory.objects.filter(is_listed=True)
         brand = Brand.objects.filter(is_listed=True)
-        print(page_obj)
+        
         return render(
             request,
             "shop.html",
@@ -393,7 +391,7 @@ def shopdetails(request, p_id):
     products=Product.objects.get(id=data.product.id)
     related_products = Color_products.objects.select_related("product").filter(product__catagory=data.product.catagory).distinct("product")[:4]
         
-    print(related_products)
+    
     item = Color_products.objects.filter(product=data.product.id, is_listed=True)
     total_quantity = data.size.aggregate(total_quantity=Sum("quantity"))["total_quantity"] or 0
     
@@ -908,7 +906,7 @@ def forgot_email(request):
 def generate_otp_and_send_email_for_forgot(request,email):
     otp = random.randint(1000, 9999)
     otp_generated_at = datetime.now().isoformat()
-    print(otp)
+    
 
     request.session["otp_email"] = otp
     request.session["time_email"] = otp_generated_at

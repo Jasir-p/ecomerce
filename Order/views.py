@@ -321,7 +321,7 @@ def Placed_order(request):
         
         return redirect("checkout")
     except Exception as e :
-        print(e)
+        
         
         messages.error(request,e)
         return redirect("checkout")
@@ -402,11 +402,11 @@ def status(request, id):
         order = item.order
         size = get_object_or_404(size_variant, id=item.size.pk)
         payment = get_object_or_404(Payment, pk=item.order.payment.pk)
-        print(order.shipping_charge)
+        
 
         if get_status in ['Cancelled', 'Returned']:
             with transaction.atomic():
-                print(size.quantity)
+                
                 size.quantity += item.quantity
                 
                 
@@ -415,15 +415,13 @@ def status(request, id):
 
                 Quantity = OrderProduct.objects.filter(order__id=order.id).exclude(status__in=['Cancelled', 'Returned']).count() == 1
 
-                print(Quantity)
                     
 
                 if order.payment_method == "Razorpay" or order.payment_method == "Wallet" or get_status=='Returned':
                     wallet = get_object_or_404(Wallet, user=order.user)
                     if payment.status=="success":
                         if Quantity:
-                            print("hiii")
-                            print(order.total_amount)
+                            
                             refund_amount = order.total_amount
                             order.total_amount =0
                             payment.amount=0
@@ -438,7 +436,7 @@ def status(request, id):
                             if order.coupon_id:
                                 coupon = get_object_or_404(Coupon, code=order.coupon_id)
                                 shipping=50 if order.shipping_charge else 0
-                                print(shipping)
+                                
                                 
                                 if order.total_amount -shipping < order.min_amount:
                                     order.coupon_id=None
@@ -503,7 +501,7 @@ def status(request, id):
                 payment.save()     
             item.status = get_status
             item.save()
-        print(size.quantity)
+        
             
 
         return redirect("order_details", item.order.id)
@@ -520,13 +518,13 @@ def generate_short_uuid():
 
 def retry_payment(request,id):
     
-        print(id)
+        
         
         order=Order.objects.get(id=id)
         
         payment=Payment.objects.get(id=order.payment.pk)
         amount=int(order.total_amount)
-        print(amount)
+        
         trans_id=razar_payment(amount)
 
         if  trans_id is not None:

@@ -183,7 +183,7 @@ def checkout(request):
         item = CartItem.objects.filter(cart__user=request.user).order_by("id")
         item_check=item.filter(product__is_listed=False).values_list('product__product__name', flat=True)
         if not item_check:
-            print(item_check)
+            
             if request.method == "POST":
 
                 coupon_code = request.POST.get("coupon_code")
