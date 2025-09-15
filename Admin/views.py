@@ -37,7 +37,7 @@ import calendar
 def login(request):
     if request.user.is_authenticated and request.user.is_superuser:
 
-        return redirect("dashbord")
+        return redirect("admin-dashboard")
 
     if request.method == "POST":
 
@@ -49,22 +49,22 @@ def login(request):
             if user is not None and user.is_superuser:
                 log(request, user)
 
-                return redirect("dashbord")
+                return redirect("admin-dashboard")
             else:
 
                 messages.error(request, "incorrect username or password")
-                return redirect("adminlogin")
+                return redirect("admin-login")
 
         except Exception as e:
             messages.error(request, e)
-            return redirect("adminlogin")
+            return redirect("admin-login")
 
     return render(request, "login.html")
 
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def dashbord(request):
 
     if request.user.is_authenticated and request.user.is_superuser:
@@ -192,9 +192,9 @@ def dashbord(request):
 
         else:
            
-            return redirect("adminlogin")
+            return redirect("admin-login")
     else:
-         return redirect("adminlogin")
+         return redirect("admin-login")
 
 
         
@@ -228,7 +228,7 @@ def get_monthly_sales(status):
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def view_user(request):
 
     if request.user.is_superuser:
@@ -237,7 +237,7 @@ def view_user(request):
 
         return render(request, "userdetails.html", {"data": user})
 
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 def block_user(request, u_id):
@@ -266,7 +266,7 @@ def unblock_user(request, u_id):
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def category(request):
 
     if request.user.is_authenticated and request.user.is_superuser:
@@ -310,11 +310,11 @@ def category(request):
 
         return render(request, "category.html")
 
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def view_category(request):
     if request.user.is_authenticated and request.user.is_superuser:
         try:
@@ -324,11 +324,11 @@ def view_category(request):
         except Catagory.DoesNotExist:
             return render(request, "view_category.html")
 
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def edit_category(request, ca_id):
     try:
 
@@ -375,7 +375,7 @@ def edit_category(request, ca_id):
         return redirect("view_category")
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def category_unlist(request, ca_id):
 
     try:
@@ -391,7 +391,7 @@ def category_unlist(request, ca_id):
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def unlist_categories(request):
 
     if request.user.is_authenticated and request.user.is_superuser:
@@ -403,10 +403,10 @@ def unlist_categories(request):
         except:
 
             return render(request, "viewunlist_category.html")
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def list_category(request, ca_id):
 
     try:
@@ -420,7 +420,7 @@ def list_category(request, ca_id):
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def brand(request):
     if request.user.is_authenticated and request.user.is_superuser:
         try:
@@ -432,40 +432,40 @@ def brand(request):
                 if Brand.objects.filter(B_name__iexact=b_name).exists():
                     messages.error(request, "brand already here")
 
-                    return render("brand")
+                    return render("brands_add")
 
                 if not b_name or not b_name[0].isalpha():
 
                     messages.error(request, "Field must start with a character")
 
-                    return render("brand")
+                    return render("brands_add")
 
                 if not is_valid_image(cover_image):
 
                     messages.error(request, "Image  is an invalid image file")
-                    return render("brand")
+                    return render("brands_add")
                 brand = Brand(
                     B_name=b_name,
                     cover_image=cover_image,
                     B_description=b_description,
                 )
                 brand.save()
-                return render("brand")
+                return render("brands_add")
             return render(request, "brand.html")
 
         except:
             return render(request, "brand.html")
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 
 def logout(request):
     authlogout(request)
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def view_brands(request):
     if  request.user.is_authenticated and request.user.is_superuser:
         try:
@@ -475,24 +475,24 @@ def view_brands(request):
         except:
             return render(request, "view_brand.html")
 
-    return redirect("adminlogin")
+    return redirect("admin-login")
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def brand_delete(request, b_id):
     if request.user.is_superuser:
         try:
             item = Brand.objects.get(id=b_id)
             item.is_listed = False
             item.save()
-            return render("viewbrand")
+            return render("view_brands")
         except:
-            return render("viewbrand")
-    return redirect("adminlogin")
+            return render("view_brands")
+    return redirect("admin-login")
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def edit_brand(request, id):
     data = Brand.objects.get(id=id)
     try:
@@ -526,11 +526,11 @@ def edit_brand(request, id):
             data.B_description = b_description
             data.save()
 
-            return redirect("viewbrand")
+            return redirect("view_brands")
 
         return render(request, "edit_brand.html", {"data": data})
     except:
-        return redirect("viewbrand")
+        return redirect("view_brands")
 
 
 def unlist_brand(request, b_id):
@@ -538,13 +538,13 @@ def unlist_brand(request, b_id):
         data = Brand.objects.get(id=b_id)
         data.is_listed = False
         data.save()
-        return redirect("viewbrand")
+        return redirect("view_brands")
     except:
-        return redirect("viewbrand")
+        return redirect("view_brands")
 
 
 @never_cache
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def viewunlist_brands(request):
     try:
         data = Brand.objects.filter(is_listed=False)
@@ -558,9 +558,9 @@ def list_brand(request, b_id):
         data = Brand.objects.get(id=b_id)
         data.is_listed = True
         data.save()
-        return redirect("viewbrand")
+        return redirect("view_brands")
     except:
-        return redirect("viewbrand")
+        return redirect("view_brands")
 
 
 def is_valid_image(file):
@@ -578,7 +578,7 @@ def is_valid_image(file):
 
 
 # @never_cache
-# @login_required(login_url="adminlogin")
+# @login_required(login_url="admin-login")
 # def sales_report(request):
 #     if request.user.is_authenticated and request.user.is_superuser:
 
@@ -645,14 +645,14 @@ def is_valid_image(file):
 
 #         else:
            
-#             return redirect("adminlogin")
+#             return redirect("admin-login")
 #     else:
         
-#         return redirect("adminlogin")
+#         return redirect("admin-login")
 
 
 
-@login_required(login_url="adminlogin")
+@login_required(login_url="admin-login")
 def download_sales_report(request):
     if request.user.is_authenticated and request.user.is_superuser:
         if request.method == "GET":
@@ -779,6 +779,6 @@ def download_sales_report(request):
                 return response
 
         else:
-            return redirect("dashbord")
+            return redirect("admin-dashboard")
     else:
-        return redirect("adminlogin")
+        return redirect("admin-login")

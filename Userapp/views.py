@@ -148,6 +148,7 @@ def user_home(request):
 def generate_otp_and_send_email(request, email):
     otp = random.randint(1000, 9999)
     otp_generated_at = datetime.now().isoformat()
+    print(otp)
     
 
     request.session["otp"] = otp
@@ -1049,4 +1050,3 @@ def add_phone(request):
         except Exception as e:
             messages.error(request,str(e))
             return redirect("view_address")
-    
