@@ -119,8 +119,8 @@
                     <div class="nav-item dropdown">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown"><i class="fa-brands fa-bandcamp"></i>Brand</a>
                         <div class="dropdown-menu bg-transparent border-0">
-                            <a href="{%url 'brand' %}" class="dropdown-item"><i class="fa fa-th me-2"></i>AddBrand</a>
-                            <a href="{%url 'viewbrand' %}" class="dropdown-item"><i class="fa fa-th me-2"></i>ViewBrand</a>
+                            <a href="{%url 'brands_add' %}" class="dropdown-item"><i class="fa fa-th me-2"></i>AddBrand</a>
+                            <a href="{%url 'view_brands' %}" class="dropdown-item"><i class="fa fa-th me-2"></i>ViewBrand</a>
                             <a href="" class="dropdown-item"><i class="fa fa-keyboard me-2"></i>Other Elements</a>
                         </div>
 
@@ -166,7 +166,7 @@
                     
                    
           
-                    <a href="{%url 'user-detail' %}" class="nav-item nav-link"><i class="fa fa-table me-2"></i>USERS</a>
+                    <a href="{%url 'user-details' %}" class="nav-item nav-link"><i class="fa fa-table me-2"></i>USERS</a>
                     
             </nav>
         </div>
@@ -258,7 +258,7 @@
                         <div class="dropdown-menu dropdown-menu-end bg-light border-0 rounded-0 rounded-bottom m-0">
                             <a href="#" class="dropdown-item">My Profile</a>
                             <a href="#" class="dropdown-item">Settings</a>
-                            <a href="{% url 'adminlogout' %}" class="dropdown-item">Log Out</a>
+                            <a href="{% url 'admin-logout' %}" class="dropdown-item">Log Out</a>
                         </div>
                     </div>
                 </div>
