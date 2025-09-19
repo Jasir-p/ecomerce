@@ -466,7 +466,8 @@ def view_brands(request):
 
             data = Brand.objects.filter(is_listed=True)
             return render(request, "view_brand.html", {"data": data})
-        except:
+        except Exception as e:
+            print(str(e))
             return render(request, "view_brand.html")
 
     return redirect("admin-login")

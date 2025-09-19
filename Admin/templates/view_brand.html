@@ -24,10 +24,10 @@
                     <td>{{ item.B_description}}</td>
                     <td><img src="{{ item.cover_image.url }}" alt="{{ item.B_name }}" width="50" ></td>
                     <td>
-                        <a href="{% url 'unlistbrand' item.id  %}" class="btn btn-danger">Unlist
+                        <a href="{% url 'unlist_brand' item.id  %}" class="btn btn-danger">Unlist
                             
                         </a>
-                        <a href="{% url 'edit_brand' item.id %}" class="btn btn-primary">
+                        <a href="{% url 'edit_brands' item.id %}" class="btn btn-primary">
                             Edit
                             
                         </a> 
