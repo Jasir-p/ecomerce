@@ -28,9 +28,9 @@
                         <td>{{i.phone}}</td>
 
                         <td>{% if i.is_active %}
-                             <a href="{% url 'blockuser' i.pk  %}" class="btn btn-danger">Block </a>
+                             <a href="{% url 'user-block' i.pk  %}" class="btn btn-danger">Block </a>
                              {% else %}
-                             <a href="{% url 'unblockuser' i.pk  %}" class="btn btn-success">Unblock </a>
+                             <a href="{% url 'user-unblock' i.pk  %}" class="btn btn-success">Unblock </a>
                              {% endif %}
                     </td>
                        
