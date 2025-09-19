@@ -2,8 +2,8 @@ from .constants import indian_state
 import re
 
 def validate_coupon(title,code,end_date,start_date,now_date,quantity,min_amount,discount_amount):
-    if title.isalpha():
-        return "Title should not be numbers only"
+    # if title.isdigit():
+    #     return "Title should not be numbers only"
 
     if title.strip() == "":
         return "Please enter Your Coupon title"
