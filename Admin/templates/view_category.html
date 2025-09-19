@@ -3,7 +3,7 @@
 <div class="container-fluid pt-4 px-4">
     <div class="bg-light rounded p-4">
         <div class="col text-end">
-            <h5 > <a href="{% url 'unlistcategory'%}" >Unlist Category</a></h5>
+            <h5 > <a href="{% url 'categories-unlisted'%}" >Unlist Category</a></h5>
         </div>
         
         <table class="table">
@@ -25,10 +25,10 @@
                     <td>{{ item.cat_description}}</td>
                     <td><img src="{{ item.cover_image.url }}" alt="" width="50" ></td>
                     <td>
-                        <a href="{% url 'delcategory' item.id  %}" class="btn btn-danger">Unlist
+                        <a href="{% url 'category-delete' item.id  %}" class="btn btn-danger">Unlist
                             
                         </a>
-                        <a href="{% url 'EditCatogory' item.id %}" class="btn btn-primary"  >
+                        <a href="{% url 'category-edit' item.id %}" class="btn btn-primary"  >
                             Edit
                             
                         </a> 

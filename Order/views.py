@@ -232,12 +232,7 @@ def Placed_order(request):
                 wallet=Wallet.objects.get(user=request.user)
                 wallet_user, created = Wallet.objects.get_or_create(user=request.user)
            
-            
-
-            
-           
-                
-                
+                                               
                 total_amount = cart.Totel()
                 if wallet.balance >= total_amount:
                     wallet_user.balance -= total_amount

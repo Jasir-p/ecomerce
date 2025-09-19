@@ -1,8 +1,5 @@
 from datetime import timedelta, timezone, datetime
 from io import BytesIO
-
-from django.core.exceptions import ValidationError
-
 from django.db.models.functions import ExtractYear, ExtractMonth
 from django.shortcuts import render, HttpResponse
 from django.contrib import messages
@@ -13,7 +10,6 @@ from .models import Catagory, Brand
 from django.contrib.auth import authenticate, login as log, logout as authlogout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache, cache_control
-
 from django.utils import timezone
 from Userapp.models import CustomUser
 from Userapp.urls import *
@@ -60,8 +56,6 @@ def login(request):
             return redirect("admin-login")
 
     return render(request, "login.html")
-
-
 
 @never_cache
 @login_required(login_url="admin-login")
@@ -301,7 +295,7 @@ def category(request):
 
                 item.save()
 
-                return redirect("view_category")
+                return redirect("view-category")
 
             except Exception as e:
 
@@ -368,11 +362,11 @@ def edit_category(request, ca_id):
             data.cat_description = ca_description
             data.save()
 
-            return redirect("view_category")
+            return redirect("view-category")
 
         return render(request, "edit_category.html", {"data": data})
     except Exception:
-        return redirect("view_category")
+        return redirect("view-category")
 
 @never_cache
 @login_required(login_url="admin-login")
@@ -383,10 +377,10 @@ def category_unlist(request, ca_id):
         item = Catagory.objects.get(id=ca_id)
         item.is_listed = False
         item.save()
-        return redirect("view_category")
+        return redirect("view-category")
 
     except Catagory.DoesNotExist:
-        return redirect("view_category")
+        return redirect("view-category")
 
 
 
@@ -413,7 +407,7 @@ def list_category(request, ca_id):
         item = Catagory.objects.get(id=ca_id)
         item.is_listed = True
         item.save()
-        return redirect("view_category")
+        return redirect("view-category")
 
     except Catagory.DoesNotExist:
         return redirect("unlistcategory")
@@ -575,81 +569,6 @@ def is_valid_image(file):
     except Exception:
 
         return False
-
-
-# @never_cache
-# @login_required(login_url="admin-login")
-# def sales_report(request):
-#     if request.user.is_authenticated and request.user.is_superuser:
-
-             
-#         if request.method == "GET":
-#             orders = OrderProduct.objects.filter(status="Delivered").select_related('order', 'product').order_by("order__created_at")
-
-#             report_type = request.GET.get('report_type')
-#             day = request.GET.get('day')
-#             week = request.GET.get('week')
-#             month = request.GET.get('month')
-#             year = request.GET.get('year')
-
-#             if report_type == 'day' and day:
-#                 orders = orders.filter(order__created_at__date=day)
-#             elif report_type == 'week' and week:
-#                 today = datetime.today()
-#                 start_of_week = today - timedelta(days=today.weekday())
-#                 orders = orders.filter(order__created_at__date__gte=start_of_week, order__created_at__date__lte=today)
-#             elif report_type == 'month' and month and year:
-#                 orders = orders.filter(order__created_at__month=month)
-#             elif report_type == 'year' and year:
-#                 orders = orders.filter(order__created_at__year=year)
-
-#             orders = orders.annotate(
-#                 coupon_applied=Case(
-#                     When(order__coupon_id__isnull=False, then=Value(True)),
-#                     default=Value(False),
-#                     output_field=BooleanField()
-#                 )
-#             )
-
-#             grouped_orders = {}
-#             for order_product in orders:
-#                 order_id = order_product.order_id
-#                 if order_id not in grouped_orders:
-#                     grouped_orders[order_id] = {
-#                             'order': order_product.order,
-#                             'products': [],
-#                             'coupon_applied': order_product.order.coupon_id is not None,
-#                             'discount_amount':Coupon.objects.get(code=order_product.order.coupon_id).discount_amount if order_product.order.coupon_id else None
-#                         }
-#                 grouped_orders[order_id]['products'].append(order_product)
-
-#             order_ids = orders.values_list('order_id', flat=True).distinct()
-#             order_list = Order.objects.filter(id__in=list(order_ids))
-
-#             count = orders.count()
-#             total = order_list.aggregate(total=Sum("total_amount"))["total"]
-#             total = total if total is not None else 0
-#             total_float = float(total)
-#             request.session['overall_sales_count'] = count
-#             request.session['overall_order_amount'] =total_float
-#             # request.session['overall_discount'] = overall_discount
-#             context = {
-#                 'grouped_orders': grouped_orders.values(),
-#                 'count': count,
-#                 'total': total_float,
-#                 'months': range(1, 13),
-#                 'years': range(2020, datetime.now().year + 1),
-#             }
-
-#             return render(request, 'sales_report.html', context)
-
-#         else:
-           
-#             return redirect("admin-login")
-#     else:
-        
-#         return redirect("admin-login")
-
 
 
 @login_required(login_url="admin-login")

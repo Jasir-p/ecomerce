@@ -8,7 +8,7 @@ import time
 import uuid
 from django.core.paginator import Paginator
 
-from django.core.validators import validate_email
+from .validations import is_valid_email,validate_mobile_number
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 import random
@@ -39,6 +39,8 @@ from Offer.models import Offer
 import razorpay
 from weasyprint import HTML
 import os
+from cart.utlis import validate_address
+from .utils import generate_otp_and_send_email,validate_otp,otp_resend
 
 # Create your views here.
 @never_cache
@@ -144,158 +146,75 @@ def user_home(request):
 
     return render(request, "index.html",context)
 
-
-def generate_otp_and_send_email(request, email):
-    otp = random.randint(1000, 9999)
-    otp_generated_at = datetime.now().isoformat()
-    print(otp)
-    
-
-    request.session["otp"] = otp
-    request.session["time"] = otp_generated_at
-
-    send_mail(
-        subject="Welcome",
-        message=f"Your OTP for verification is: {otp}",
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[email],
-        fail_silently=False,
-    )
-
-
 def otp(request):
     if request.method == "POST":
-        otp1 = request.POST.get("otp1")
-        otp2 = request.POST.get("otp2")
-        otp3 = request.POST.get("otp3")
-        otp4 = request.POST.get("otp4")
+        error_message = validate_otp(request)
 
-        full_otp = otp1 + otp2 + otp3 + otp4
-        
-
-        if "otp" in request.session:
-            otp = request.session["otp"]
-            otp_generated = request.session["time"]
-            delta = timedelta(minutes=2)
-            time = datetime.fromisoformat(otp_generated)
-
-            
-            
-            if datetime.now() <= time + delta:
-                
-
-                if int(full_otp) == otp:
-                    
-
-                    try:
-                        
-                        
-                        ref=refreal_genarate()
-                        
-                        new_user = CustomUser.objects.create_user(
-                            username=request.session["name"],
-                            password=request.session["password"],
-                            email=request.session["email"],
-                            phone=request.session["phone"],
-                            referal_code=ref,
-                        )
-                        
-                        
-                        refaral=request.session["refaral"]
-                        if refaral:
-
-                            Ref_user = CustomUser.objects.get(referal_code=request.session["refaral"])
-                            
-
-                            if Ref_user is not None:
-                                new_user_wallet = Wallet.objects.get(user=new_user)
-                                
-                                
-                                new_user_wallet.balance += 30
-                                new_user_wallet.save()
-                                
-
-                                Wallet_transaction.objects.create(
-                                    wallet=new_user_wallet,
-                                    transaction_id=generate_unique_transaction_id(),
-                                    referral_deposit=30
-                                )
-                                
-
-                                ref_user_wallet = Wallet.objects.get(user=Ref_user)
-                                
-
-                                ref_user_wallet.balance += 50
-                                ref_user_wallet.save()
-                                
-
-                                Wallet_transaction.objects.create(
-                                    wallet=ref_user_wallet,
-                                    transaction_id=generate_unique_transaction_id(),
-                                    referral_deposit=50
-                                )
-                                Myrefaral.objects.create(
-                                    user=Ref_user,
-                                    user_name=new_user.username,
-
-                                )
-
-                                
-
-                        # Clean up session data
-                        request.session.pop("name")
-                        request.session.pop("password")
-                        request.session.pop("email")
-                        request.session.pop("phone")
-
-                        messages.success(request, "Registered successfully")
-                        return redirect("login")
-
-                    except CustomUser.DoesNotExist:
-                        
-                        messages.error(request, "Referral user does not exist.")
-                        return redirect("otp")
-
-                    except Wallet.DoesNotExist:
-                        
-                        messages.error(request, "Wallet does not exist for the user.")
-                        return redirect("otp")
-
-                    except Exception as e:
-                        
-                        messages.error(request, "An error occurred during registration. Please try again.")
-                        return redirect("otp")
-
-                else:
-                    messages.error(request, "Incorrect OTP! Please try again.")
-                    return redirect("otp")
-            else:
-                
-                messages.error(request, "OTP has expired. Please request a new one.")
-                return redirect("otp")
+        if error_message:
+            messages.error(request,error_message)
+            return redirect('otp')
         else:
-            
-            messages.error(request, "OTP session has expired or not set. Please request a new one.")
-            return redirect("otp")
+            try:
+                        
+                        
+                ref=refreal_genarate()
+                
+                new_user = CustomUser.objects.create_user(
+                    username=request.session["name"],
+                    password=request.session["password"],
+                    email=request.session["email"],
+                    phone=request.session["phone"],
+                    referal_code=ref,
+                )
+                refaral=request.session["refaral"]
+                if refaral:
+                    Ref_user = CustomUser.objects.get(referal_code=request.session["refaral"])
+                    if Ref_user is not None:
+                        new_user_wallet = Wallet.objects.get(user=new_user)
+                        new_user_wallet.balance += 30
+                        new_user_wallet.save()
+                        Wallet_transaction.objects.create(
+                            wallet=new_user_wallet,
+                            transaction_id=generate_unique_transaction_id(),
+                            referral_deposit=30
+                        )
+                        ref_user_wallet = Wallet.objects.get(user=Ref_user)
+                        ref_user_wallet.balance += 50
+                        ref_user_wallet.save()
+                        Wallet_transaction.objects.create(
+                            wallet=ref_user_wallet,
+                            transaction_id=generate_unique_transaction_id(),
+                            referral_deposit=50
+                        )
+                        Myrefaral.objects.create(
+                            user=Ref_user,
+                            user_name=new_user.username,
+
+                        )
+                request.session.pop("name")
+                request.session.pop("password")
+                request.session.pop("email")
+                request.session.pop("phone")
+
+                messages.success(request, "Registered successfully")
+                return redirect("login")
+
+            except CustomUser.DoesNotExist:
+                
+                messages.error(request, "Referral user does not exist.")
+                return redirect("otp")
+
+            except Wallet.DoesNotExist:
+                
+                messages.error(request, "Wallet does not exist for the user.")
+                return redirect("otp")
+
+            except Exception as e:
+                print(str(e))
+                messages.error(request, "An error occurred during registration. Please try again.")
+                return redirect("otp")
     else:
         return render(request, "otp.html")
-
-def is_valid_email(email):
-    try:
-        validate_email(email)
-        return True
-    except ValidationError:
-        return False
-
-
-def validate_mobile_number(mobile_number):
-
-    pattern = re.compile(r"^[6-9]\d{9}$")
-
-    if pattern.match(mobile_number):
-        return True
-    else:
-        return False
 
 
 def logout(request):
@@ -305,21 +224,7 @@ def logout(request):
 
 def resend_otp(request):
 
-    otp = random.randint(1000, 9999)
-    otp_generated_at = datetime.now().isoformat()
-    
-    
-    request.session["otp"] = otp
-    request.session["time"] = otp_generated_at
-    email = request.session["email"]
-
-    send_mail(
-        subject="Welcome",
-        message=f"Your OTP for verification is: {otp}",
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+    otp_resend(request)
     return redirect("otp")
 
 def refreal_genarate():
@@ -509,24 +414,11 @@ def add_address(request):
 
         
         
-        if not all([name, address, house_no, city, state, country, pincode]):
-            
-            messages.error(request, "pls provide all field ")
+        error_message  = validate_address(name, address, house_no, city, state, country, pincode)
+        if error_message:
+            messages.error(request, error_message)
             return redirect('add_address')
-        indian_state=[
-                "Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh",
-                "Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli and Daman and Diu",
-                "Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand",
-                "Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya",
-                "Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
-                "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
-            ]
-        if state.casefold() not in [state_name.casefold() for state_name in indian_state]:
-            messages.error(request, "pls provide valid state ")
-            return redirect('add_address')
-        if not re.match(r'^[1-9][0-9]{5}$', pincode):
-            messages.error(request,'Invalid pincode format. Please enter a valid Indian pincode.')
-            return redirect('add_address')
+        
         address_obj = Address.objects.create(
             user=user,
             name=name,
@@ -564,25 +456,9 @@ def update_address(request, address_id):
         country = request.POST.get("country", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        if not all([name, address, house_no, city, state, country, pincode]):
-            messages.error(request, "Please provide all fields")
-            return redirect('edit_adress', address_id=address_id)
-
-        indian_state = [
-            "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh",
-            "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu",
-            "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
-            "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
-            "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
-            "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-        ]
-
-        if state.casefold() not in [state_name.casefold() for state_name in indian_state]:
-            messages.error(request, "Please provide a valid state")
-            return redirect('edit_adress', address_id=address_id)
-
-        if not re.match(r'^[1-9][0-9]{5}$', pincode):
-            messages.error(request, 'Invalid pincode format. Please enter a valid Indian pincode.')
+        error_message  = validate_address(name, address, house_no, city, state, country, pincode)
+        if error_message:
+            messages.error(request, error_message)
             return redirect('edit_adress', address_id=address_id)
 
         address_obj.name = name
@@ -898,86 +774,31 @@ def forgot_email(request):
             email=users.email
             request.session['emails']=email
             
-            generate_otp_and_send_email_for_forgot(request,email)
+            generate_otp_and_send_email(request,email)
             messages.success(request,'Otp sent Succesfully')
             return redirect('otp_password')
         except CustomUser.objects.get(email=email).DoesNotExist:
             messages.error(request,"email doesnot exist")
     return render(request,"forgot_passsword.html")
-def generate_otp_and_send_email_for_forgot(request,email):
-    otp = random.randint(1000, 9999)
-    otp_generated_at = datetime.now().isoformat()
-    
 
-    request.session["otp_email"] = otp
-    request.session["time_email"] = otp_generated_at
-
-    send_mail(
-        subject="Welcome",
-        message=f"Your OTP for verification is: {otp}",
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[email],
-        fail_silently=False,
-    )
 def check_otp(request):
     if request.method == "POST":
-        otp1 = request.POST.get("otp1")
-        otp2 = request.POST.get("otp2")
-        otp3 = request.POST.get("otp3")
-        otp4 = request.POST.get("otp4")
 
-        full_otp = otp1 + otp2 + otp3 + otp4
-        
-
-        if "otp_email" in request.session:
-            otp = request.session["otp_email"]
-            otp_generated = request.session["time_email"]
-            delta = timedelta(minutes=2)
-            time = datetime.fromisoformat(otp_generated)
-
-           
-            
-            if datetime.now() <= time + delta:
-                
-
-                if int(full_otp) == otp:
-                    messages.success(request,"You Enterd Successfully")
-
-                    return redirect("password_section")
-
-                   
-
-                else:
-                    messages.error(request, "Incorrect OTP! Please try again.")
-                    return redirect("otp_password")
-            else:
-                
-                messages.error(request, "OTP has expired. Please request a new one.")
+        error_message = validate_otp(request)
+        if error_message:
+                messages.error(request, error_message)
                 return redirect("otp_password")
-        else:
-            
-            messages.error(request, "OTP session has expired or not set. Please request a new one.")
-            return redirect("otp_password")
+        else:      
+            messages.success(request,"You Enterd Successfully")
+            return redirect("password_section")
+                    
     else:
         return render(request,'password_otp.html')
 
     
 def resend_otp_password(request):
 
-    otp = random.randint(1000, 9999)
-    otp_generated_at = datetime.now().isoformat()
-    
-    request.session["otp_email"]=otp
-    request.session["time_email"]=otp_generated_at
-    email = request.session["emails"]
-
-    send_mail(
-        subject="Welcome",
-        message=f"Your OTP for verification is: {otp}",
-        from_email=EMAIL_HOST_USER,
-        recipient_list=[email],
-        fail_silently=False,
-    )
+    otp_resend(request)
     return redirect("otp_password")
 
 def set_password(request):

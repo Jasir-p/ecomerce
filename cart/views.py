@@ -25,6 +25,7 @@ from django.utils.translation import gettext as _
 from django.core.files.uploadedfile import UploadedFile
 from PIL import Image
 from django.views import View
+from .utlis import validate_coupon,validate_address
 
 # Create your views here.
 
@@ -194,9 +195,7 @@ def checkout(request):
                                                         code=coupon_code, 
                                                         start_date__lte=date.today(), 
                                                         end_date__gte=timezone.now()
-            )
-                    
-                        
+                                                        )
                     except Coupon.DoesNotExist:
                         messages.error(request,"Couopn Does nort exist")
                         return redirect('checkout')
@@ -206,17 +205,11 @@ def checkout(request):
                         
                         if not CustomerCoupon.objects.filter(user=request.user, coupon=coupon).exists():
                             cart.total_amount-=coupon.discount_amount
-                                
                             cart.coupon = coupon
                             cart.coupon_applied=True
-                                
                             cart.save()
-                            
                             CustomerCoupon.objects.create(user=request.user, coupon=coupon)
-                                
-                            cart.Totel()
-                                
-                                
+                            cart.Totel()                                
                             messages.success(request,"Coupon applyed")
                             return redirect('checkout')
                         else:
@@ -228,10 +221,7 @@ def checkout(request):
                 else:
                     messages.error(request,"Only one coupon aplly at a order")
                     return redirect('checkout')
-
-
-            
-
+                
             item = CartItem.objects.filter(cart__user=request.user).order_by("id")
             context = {
                 "item": item,
@@ -245,20 +235,18 @@ def checkout(request):
         else:
             out_of_stock_message = ", ".join(item_check) + " is out of stock."
             messages.error(request,out_of_stock_message)
-            return redirect("viewcart")
-           
+            return redirect("viewcart")           
     except:
         return redirect('viewcart')
+
+
 
 def coupon_applay(request):
     return redirect('checkout')
 
 def add_coupon(request):
-
-   
-
+        
         now_date = timezone.now().date()
-
         if request.method == "POST":
             title = request.POST.get("title")
             code = request.POST.get("code")
@@ -276,50 +264,12 @@ def add_coupon(request):
                 active = True
             else:
                 active = False
-
-            if title.isalpha():
-                messages.error(request, "Title should not be numbers only")
-                return redirect('add_coupon')
-
-            if title.strip() == "":
-                messages.error(request, "Please enter Your Coupon title")
-                return redirect('add_coupon')
-
-            if code.strip() == "":
-                messages.error(request, "Please enter your Coupon code")
-                return redirect('add_coupon')
-
-            if end_date < start_date:
-                messages.error(request, "End date must be after start date.")
-                return redirect('add_coupon')
-
-            if now_date > end_date:
-                messages.error(request, "The end date for the coupon cannot be in the past.")
-                return redirect('add_coupon')
-
-            if quantity.strip() == "":
-                messages.error(request, "Please enter your Quantity")
-                return redirect('add_coupon')
-
-            if min_amount.strip() == "":
-                messages.error(request, "Please enter your Minimum Amount")
-                return redirect('add_coupon')
-
-            if discount_amount.strip() == "":
-                messages.error(request, "Please enter your Discount Amount")
-                return redirect('add_coupon')
             
-            if float(quantity) < 1:
-                messages.error(request,'Quantity should be  minimum 1')
-                return redirect('add_coupon')
-            
-            if float(min_amount) < 1:
-                messages.error(request,'Not Valid Minimum amount ')
+            error_message = validate_coupon(title,code,end_date,start_date,now_date,quantity,min_amount,discount_amount)
+            if error_message:
+                messages.error(request,error_message)
                 return redirect('add_coupon')
 
-            if float(discount_amount) < 1:
-                messages.error(request,'Not Valid Minimum Discount amount')
-                return redirect('add_coupon')
             
             if Coupon.objects.filter(code=code).exists():
                 messages.error(request,f'Coupon code "{code}" is already exists!')
@@ -361,25 +311,9 @@ def check_update_address(request, address_id):
         country = request.POST.get("country", "").strip()
         pincode = request.POST.get("pincode", "").strip()
 
-        if not all([name, address, house_no, city, state, country, pincode]):
-            messages.error(request, "Please provide all fields")
-            return redirect('edit_adress', address_id=address_id)
-
-        indian_state = [
-            "Andaman and Nicobar Islands", "Andhra Pradesh", "Arunachal Pradesh",
-            "Assam", "Bihar", "Chandigarh", "Chhattisgarh", "Dadra and Nagar Haveli and Daman and Diu",
-            "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand",
-            "Karnataka", "Kerala", "Ladakh", "Lakshadweep", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya",
-            "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
-            "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-        ]
-
-        if state.casefold() not in [state_name.casefold() for state_name in indian_state]:
-            messages.error(request, "Please provide a valid state")
-            return redirect('edit_adress', address_id=address_id)
-
-        if not re.match(r'^[1-9][0-9]{5}$', pincode):
-            messages.error(request, 'Invalid pincode format. Please enter a valid Indian pincode.')
+        error_message  = validate_address(name, address, house_no, city, state, country, pincode)
+        if error_message:
+            messages.error(request, error_message)
             return redirect('edit_adress', address_id=address_id)
 
         address_obj.name = name
@@ -398,6 +332,7 @@ def check_update_address(request, address_id):
 def view_admin_coupon(request):
     coupons=Coupon.objects.all()
     return render(request,'view_coupons.html',{'coupons':coupons})
+
 def check_add_address(request):
     if request.method == "POST":
         user = request.user
@@ -410,24 +345,9 @@ def check_add_address(request):
         pincode = request.POST.get("pincode", "").strip()
 
         
-        
-        if not all([name, address, house_no, city, state, country, pincode]):
-            
-            messages.error(request, "pls provide all field ")
-            return redirect('check_add_address')
-        indian_state=[
-                "Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh",
-                "Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli and Daman and Diu",
-                "Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand",
-                "Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya",
-                "Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
-                "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
-            ]
-        if state.casefold() not in [state_name.casefold() for state_name in indian_state]:
-            messages.error(request, "pls provide valid state ")
-            return redirect('check_add_address')
-        if not re.match(r'^[1-9][0-9]{5}$', pincode):
-            messages.error(request,'Invalid pincode format. Please enter a valid Indian pincode.')
+        error_message  = validate_address(name, address, house_no, city, state, country, pincode)
+        if error_message:
+            messages.error(request, error_message)
             return redirect('check_add_address')
         address_obj = Address.objects.create(
             user=user,
@@ -444,10 +364,8 @@ def check_add_address(request):
         
         return redirect('checkout')
     
-    
-    
-
     return render(request,'checkout_add_adress.html')
+
 def edit_coupon(request, id):
     coupon = get_object_or_404(Coupon, id=id)
     now_date = timezone.now().date()
@@ -467,49 +385,11 @@ def edit_coupon(request, id):
 
         active = active_check == "1"
 
-        if title.isdigit():
-            messages.error(request, "Title should not be numbers only")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if title.strip() == "":
-            messages.error(request, "Please enter Your Coupon title")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if code.strip() == "":
-            messages.error(request, "Please enter your Coupon code")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if end_date < start_date:
-            messages.error(request, "End date must be after start date.")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if now_date > end_date:
-            messages.error(request, "The end date for the coupon cannot be in the past.")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if quantity.strip() == "":
-            messages.error(request, "Please enter your Quantity")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if min_amount.strip() == "":
-            messages.error(request, "Please enter your Minimum Amount")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if discount_amount.strip() == "":
-            messages.error(request, "Please enter your Discount Amount")
-            return redirect('edit_coupon', id=coupon.id)
-
-        if float(quantity) < 1:
-            messages.error(request, 'Quantity should be minimum 1')
-            return redirect('edit_coupon', id=coupon.id)
-
-        if float(min_amount) < 1:
-            messages.error(request, 'Not Valid Minimum amount')
-            return redirect('edit_coupon', id=coupon.id)
-
-        if float(discount_amount) < 1:
-            messages.error(request, 'Not Valid Minimum Discount amount')
-            return redirect('edit_coupon', id=coupon.id)
+        
+        error_message = validate_coupon(title,code,end_date,start_date,now_date,quantity,min_amount,discount_amount)
+        if error_message:
+                messages.error(request,error_message)
+                return redirect('edit_coupon', id=coupon.id)
 
         
         if Coupon.objects.filter(code__exact=code).exclude(id=coupon.id).exists():
@@ -533,6 +413,7 @@ def edit_coupon(request, id):
         'coupon': coupon
     }
     return render(request, "edit_coupon.html", context)
+
 def coupon_is_active(request,id):
     coupon=Coupon.objects.get(id=id)
 
