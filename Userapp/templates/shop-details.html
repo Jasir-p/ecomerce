@@ -111,7 +111,7 @@
                                     <span>Size:</span>
                                     {% for size in data.size.all %}
                                         {% if size.quantity > 0 %}
-                                    <label for="size_{{ size.id }}" class="active">{{ size.size }}
+                                    <label for="size_{{ size.id }}" class="">{{ size.size }}
                                     <input type="radio" id="size_{{ size.id }}" name="size" value="{{ size.id }}"> </label>
                                         {% endif %}
                                     {% endfor %}

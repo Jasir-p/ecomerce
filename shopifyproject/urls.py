@@ -27,7 +27,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("Admin.urls")),
     path("", include("Userapp.urls")),
-    path("Product/", include("Products.urls")),
+    path("", include("Products.urls")),
     path("", include("cart.urls")),
     path("", include("Order.urls")),
     path("",include("Offer.urls")),

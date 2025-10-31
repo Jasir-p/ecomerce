@@ -16,7 +16,7 @@ from django.core.files.uploadedfile import UploadedFile
 from PIL import Image
 from .models import *
 from Admin.urls import *
-from django.http import JsonResponse
+from .validations import product_form_validations
 
 # Create your views here.
 
@@ -34,32 +34,19 @@ def add_products(request):
             description = request.POST.get("description").strip()
             category_id = request.POST.get("category")
             brand = request.POST.get("brand")
-            Thumbnail = request.FILES.get("thumbnail")
-
-            if Product.objects.filter(name__iexact=name).exists():
-                messages.error(request, "product already exist")
+            thumbnail = request.FILES.get("thumbnail")
+            error_message = product_form_validations(name,price,thumbnail)
+            if error_message:
+                messages.error(request, error_message)
                 return redirect("addproducts")
-            if not name or not name[0].isalpha():
-                messages.error(request, "Field must start with a character")
-                return redirect("addproducts")
-            if len(name) < 2:
-                messages.error(request, "Field must atleast two character")
-                return redirect("addproducts")
-
-            elif int(price) < 0:
-                messages.error(request, "price must be postive number")
-                return redirect("addproducts")
-            elif not is_valid_image(Thumbnail):
-                messages.error(request, "Thumbnail is an invalid image file ")
-                return redirect("addproducts")
-
+            
             product = Product(
                 name=name,
                 price=price,
                 description=description,
                 catagory_id=category_id,
                 brand_id=brand,
-                thumbnail=Thumbnail,
+                thumbnail=thumbnail,
             )
             product.save()
             messages.success(request, "Product added successfully")
@@ -233,7 +220,7 @@ def edit_product(request, id):
             description = request.POST.get("description").strip()
             category_id = request.POST.get("Category")
             brand = request.POST.get("Brand")
-            Thumbnail = request.FILES.get("Thumbnail")
+            thumbnail = request.FILES.get("Thumbnail")
 
             if Product.objects.filter(name__iexact=name).exclude(id=id).exists():
                 messages.error(request, "product already exist")
@@ -248,12 +235,12 @@ def edit_product(request, id):
             elif float(price) < 0:
                 messages.error(request, "price must be postive number")
                 return redirect("editproduct", id)
-            elif Thumbnail:
-                if not is_valid_image(Thumbnail):
+            elif thumbnail:
+                if not is_valid_image(thumbnail):
                     messages.error(request, "Thumbnail is an invalid image file ")
                     return redirect("editproduct", id)
                 else:
-                    product.thumbnail = Thumbnail
+                    product.thumbnail = thumbnail
 
             product.name = name
             product.price = price

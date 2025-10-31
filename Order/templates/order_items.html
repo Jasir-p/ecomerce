@@ -98,6 +98,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            {% if is_item_count %}
             <table>
                     <tr class="total-row">
                         <td colspan="4" class="total-amount">Total Amount:</td>
@@ -118,6 +119,7 @@
                         <td colspan="3">{{ Address.total_amount }}</td>
                     </tr>
                 </table>
+            {% endif %}
             
         </div>
     </div>

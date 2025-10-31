@@ -1,18 +1,10 @@
 from django.shortcuts import render
-from datetime import timedelta, timezone, datetime
-
-from django.core.exceptions import ValidationError
-from decimal import Decimal
-
 import random
 from django.shortcuts import render, HttpResponse
 from django.contrib import messages
-from django.db.models import Q,Count
-from django.http import JsonResponse
 from cart.models import *
 from cart.urls import *
 from Admin.urls import *
-
 from django.shortcuts import render, redirect
 from .models import *
 from django.contrib.auth import authenticate, login as log, logout as authlogout
@@ -21,12 +13,9 @@ from django.views.decorators.cache import never_cache, cache_control
 
 from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction
-from django.utils import timezone
 from Userapp.models import CustomUser,Wallet,Wallet_transaction
 from Userapp.urls import *
 from django.utils.translation import gettext as _
-from django.core.files.uploadedfile import UploadedFile
-from django.http import JsonResponse
 import uuid
 from django.db.models import F
 import random
@@ -36,6 +25,7 @@ import string
 import razorpay
 from django.conf import settings
 from django.urls import reverse
+from .services import check_is_available,create_order
 
 # Create your views here.
 razorpay_client = razorpay.Client(auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET))
@@ -55,11 +45,12 @@ def initiate_payment(items):
         }
     razorpay_client.order.create(data=item_data)
     return razorpay_order_id
-        
+
 
 def Placed_order(request):
     try:
         if request.method == "POST":
+            print("checking")
             try:
                 address_id = request.POST.get("address")
                 selected_address = Address.objects.get(id=address_id)
@@ -67,40 +58,18 @@ def Placed_order(request):
             except:
                 messages.error(request,"please select a address")
                 return redirect("checkout")
-            
-
-            
             payment_mode = request.POST.get("payment_method")
-            
-            
+            print(payment_mode)
             cart = Cart.objects.get(user=request.user)
             cart_items = CartItem.objects.filter(cart__user=request.user)
-            if payment_mode == 'Cash On Delivery':
-                
-             
-                total_amount = cart.Totel()
-                
+            total_amount = cart.Totel()
+            if payment_mode == 'Cash On Delivery':  
                 payment = Payment.objects.create(
                     user=request.user, method=payment_mode, amount=total_amount
                 )
-                
-                order = Order.objects.create(
-                    user=request.user,
-                    payment=payment,
-                    total_amount=total_amount, 
-                    payment_method=payment_mode,
-                    coupon_id=cart.coupon.code if cart.coupon else None,
-                    coupon_amount=cart.coupon.discount_amount if cart.coupon else None,
-                    min_amount=cart.coupon.min_amount if cart.coupon else None,
-                    shipping_charge=cart.shipping_charge,
-                    order_id=generate_order_id(),
-                    name=selected_address.name,
-                    address=selected_address.address,
-                    House_no=selected_address.House_no,
-                    city=selected_address.city,
-                    state=selected_address.state,
-                    country=selected_address.country,
-                )
+                order = create_order(request.user,selected_address,cart,payment,payment_mode,total_amount)
+                order.payment = payment
+                order.save()
 
                 for cart_item in CartItem.objects.filter(cart=cart):
                     product = cart_item.product
@@ -113,14 +82,14 @@ def Placed_order(request):
                         prices = prod.product.price
                     
                     size = cart_item.product_size_color.id
-                    
                     product_size_colors = size_variant.objects.get(id=size)
+                    is_quantity_available = check_is_available(size,quantity_ordered)
 
-                    if product_size_colors.quantity < quantity_ordered or prod.is_listed == False:
+                    if  is_quantity_available or prod.is_listed == False:
                         order.delete()
                         payment.delete()
                         messages.error(
-                            request, f"Sorry, '{product.product.name}' is out of stock."
+                            request, is_quantity_available
                         )
                         return redirect("viewcart")
                    
@@ -136,9 +105,10 @@ def Placed_order(request):
                         status= 'Processing',
                         trackig_id=generate_tracking_id(),
                     )
-
+                order.save()
                 cart_items.delete()
                 cart.delete()
+                
                 return render(request, "confirm.html",{'order':order})
 
             
@@ -167,28 +137,8 @@ def Placed_order(request):
                 else:
                     payment = Payment.objects.create(   
                         user=request.user, method=payment_mode, amount=total_amount, status=payment_status 
-                    )
-                
-                
-            
-                order = Order.objects.create(
-                    user=request.user,
-                    payment=payment,
-                    total_amount=total_amount,
-                    payment_method=payment_mode,
-                    coupon_id=cart.coupon.code if cart.coupon else None,
-                    coupon_amount=cart.coupon.discount_amount if cart.coupon else None,
-                    min_amount=cart.coupon.min_amount if cart.coupon else None,
-                    shipping_charge=cart.shipping_charge,
-                    order_id=generate_order_id(),
-                    name=selected_address.name,
-                    address=selected_address.address,
-                    House_no=selected_address.House_no,
-                    city=selected_address.city,
-                    state=selected_address.state,
-                    country=selected_address.country,
-                )
-
+                    )            
+                order = create_order(request.user,selected_address,cart,payment,payment_mode,total_amount)
                 for cart_item in CartItem.objects.filter(cart=cart):
                     product = cart_item.product
                     prod = Color_products.objects.get(id=product.id)
@@ -199,14 +149,14 @@ def Placed_order(request):
                     else:
                         prices = prod.product.price
 
-                    
                     product_size_colors = size_variant.objects.get(id=size)
+                    is_quantity_available = check_is_available(size,quantity_ordered)
 
-                    if product_size_colors.quantity < quantity_ordered:
+                    if  is_quantity_available or prod.is_listed == False:
                         order.delete()
                         payment.delete()
                         messages.error(
-                            request, f"Sorry, '{product.product.name}' is out of stock."
+                            request, is_quantity_available
                         )
                         return redirect("viewcart")
                     
@@ -222,46 +172,23 @@ def Placed_order(request):
                         trackig_id=generate_tracking_id(),
                     )
 
+                order.save()
                 cart_items.delete()
                 cart.delete()
-                
+                print("ordersave")
                 return render(request, "confirm.html",{'payment_failed': payment_failed,'order':order})
+            
             elif payment_mode == "Wallet":
-
-                
+                print('checking wallet')                
                 wallet=Wallet.objects.get(user=request.user)
-                wallet_user, created = Wallet.objects.get_or_create(user=request.user)
-           
-                                               
+                wallet_user, created = Wallet.objects.get_or_create(user=request.user)                              
                 total_amount = cart.Totel()
                 if wallet.balance >= total_amount:
                     wallet_user.balance -= total_amount
-                    
-            
-                
                     payment = Payment.objects.create(   
                             user=request.user, method=payment_mode, amount=total_amount, status='success' 
                         )
-                    
-                    
-                
-                    order = Order.objects.create(
-                        user=request.user,
-                        payment=payment,
-                        total_amount=total_amount,
-                        payment_method=payment_mode,
-                        coupon_id=cart.coupon.code if cart.coupon else None,
-                        coupon_amount=cart.coupon.discount_amount if cart.coupon else None,
-                        min_amount=cart.coupon.min_amount if cart.coupon else None,
-                        shipping_charge=cart.shipping_charge,
-                        order_id=generate_order_id(),
-                        name=selected_address.name,
-                        address=selected_address.address,
-                        House_no=selected_address.House_no,
-                        city=selected_address.city,
-                        state=selected_address.state,
-                        country=selected_address.country,
-                    )
+                    order = create_order(request.user,selected_address,cart,payment,payment_mode,total_amount)
 
                     for cart_item in CartItem.objects.filter(cart=cart):
                         product = cart_item.product
@@ -276,12 +203,13 @@ def Placed_order(request):
                         
                         product_size_colors = size_variant.objects.get(id=size)
 
-                        if product_size_colors.quantity < quantity_ordered:
+                        is_quantity_available = check_is_available(size,quantity_ordered)
+
+                        if  is_quantity_available or prod.is_listed == False:
                             order.delete()
                             payment.delete()
-
                             messages.error(
-                                request, f"Sorry, '{product.product.name}' is out of stock."
+                                request, is_quantity_available
                             )
                             return redirect("viewcart")
                         
@@ -307,28 +235,25 @@ def Placed_order(request):
                         order.save()
                         wallet_user.save()
                         
-                    
+                    order.save()
                     cart_items.delete()
                     cart.delete()
+                    print("ordersave")
                     
                     return render(request, "confirm.html",{'order':order})
                 messages.error(request,'Wallet has insufficient funds')
         
-        return redirect("checkout")
+            return redirect("checkout")
     except Exception as e :
-        
+        print(str(e))
         
         messages.error(request,e)
         return redirect("checkout")
        
         
-
-
-        
-
+# def check_and_update(cart_item):
 
 def generate_tracking_id():
-
     fixed_chars = "HP"
     max_unique_id_length = 20 - len(fixed_chars)
     unique_id = str(int(time.time())) + str(random.randint(10000, 99999))
@@ -338,23 +263,6 @@ def generate_tracking_id():
 
 
 # Generate a tracking ID
-
-
-def generate_order_id(length=8):
-
-    digits = string.digits
-
-    first_two_chars = "OID"
-
-    remaining_chars = "".join(secrets.choice(digits) for i in range(length - 3))
-
-    order_id = first_two_chars + remaining_chars
-    while Order.objects.filter(order_id=order_id).exists():
-        remaining_chars = "".join(secrets.choice(digits) for i in range(length - 3))
-        order_id = first_two_chars + remaining_chars
-
-    return order_id
-
 
 @never_cache
 @login_required(login_url="adminlogin")
@@ -373,11 +281,13 @@ def order_details(request, id):
         data = OrderProduct.objects.filter(order__id=id)
         order = Order.objects.get(id=id)
         order_products = OrderProduct.objects.filter(order__id=id).exclude(status__in=['Cancelled', 'Returned'])
+        order_item_count = True if order_products.count()> 0 else False
    
         totel_amount=order_products.annotate(totel_price=F('quantity')* F('price')).aggregate(totel_sum=Sum('totel_price'))['totel_sum'] or 0
         
 
-        return render(request, "order_items.html", {"data": data, "Address": order,'totel_amount':totel_amount})
+        return render(request, "order_items.html", {"data": data, "Address": order,
+                                                    'totel_amount':totel_amount,'is_item_count':order_item_count})
     return redirect("adminlogin")
 
 
@@ -385,8 +295,6 @@ def order_details(request, id):
 def Confirm(request):
 
     return render(request, "confirm.html")
-
-
 
 def status(request, id):
     if request.method == "POST":
@@ -410,7 +318,7 @@ def status(request, id):
 
                 Quantity = OrderProduct.objects.filter(order__id=order.id).exclude(status__in=['Cancelled', 'Returned']).count() == 1
 
-                    
+                shipping=50 if order.shipping_charge else 0
 
                 if order.payment_method == "Razorpay" or order.payment_method == "Wallet" or get_status=='Returned':
                     wallet = get_object_or_404(Wallet, user=order.user)
@@ -419,18 +327,22 @@ def status(request, id):
                             
                             refund_amount = order.total_amount
                             order.total_amount =0
-                            payment.amount=0
+                            # payment.amount=0
                             payment.status="Cancelled"
                             if order.coupon_id:
                                 coupon = get_object_or_404(Coupon, code=order.coupon_id)
                                 order.coupon_id=None
                                 CustomerCoupon.objects.get(user=order.user,coupon__id=coupon.pk).delete()
                         else:
+                            reduandant_amount=order.total_amount-item_total
                             order.total_amount -= item_total
                             payment.amount-=item_total
+                            shipping_charge_add = 50 if reduandant_amount-shipping<3000 else 0
+                            
+
                             if order.coupon_id:
                                 coupon = get_object_or_404(Coupon, code=order.coupon_id)
-                                shipping=50 if order.shipping_charge else 0
+                                
                                 
                                 
                                 if order.total_amount -shipping < order.min_amount:
@@ -445,8 +357,13 @@ def status(request, id):
                             else:
                                 refund_amount = item_total
                             
+                            if shipping_charge_add and not shipping:
+                                refund_amount = item_total- shipping_charge_add
+                                order.shipping_charge=True
+                            
                         wallet.balance += refund_amount
                         transaction_id = str(uuid.uuid4())
+
 
                         Wallet_transaction.objects.create(
                             wallet=wallet,
@@ -454,13 +371,13 @@ def status(request, id):
                             money_deposit=refund_amount
                         )
                         wallet.save()
-                    
+                        
                         
                     else:
                         if Quantity:
                         
                             refund_amount = order.total_amount
-                            order.total_amount =0
+                            # order.total_amount =0
                             payment.amount=0
                             payment.status="Cancelled"
                             if order.coupon_id:
@@ -486,6 +403,7 @@ def status(request, id):
                     order.save()
                     payment.save()
                     item.status = get_status
+                    size.save()
                     item.save()
                    
         
@@ -502,9 +420,6 @@ def status(request, id):
         return redirect("order_details", item.order.id)
 
 
-
-
-
 def generate_short_uuid():
     uuid_str = str(uuid.uuid4())
     
@@ -513,13 +428,9 @@ def generate_short_uuid():
 
 def retry_payment(request,id):
     
-        
-        
         order=Order.objects.get(id=id)
-        
         payment=Payment.objects.get(id=order.payment.pk)
         amount=int(order.total_amount)
-        
         trans_id=razar_payment(amount)
 
         if  trans_id is not None:
@@ -527,11 +438,8 @@ def retry_payment(request,id):
             payment.Transaction_id=trans_id
             OrderProduct.objects.filter(order__id=order.id).update(status='Processing')
             payment.save()
-
-
-
-
         return redirect('user_order')
+
 def razar_payment(items):
     data = {
         "currency": "INR",

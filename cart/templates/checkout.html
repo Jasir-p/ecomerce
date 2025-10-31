@@ -79,7 +79,7 @@
                                                         </div>
                                                         <div class="col-lg-2">
                                                             <div class="edit-btn bg-light rounded">
-                                                                <a href="{% url 'check_address' i.id %}" data-bs-toggle="tooltip" data-placement="top" title="" data-bs-original-title="Edit">
+                                                                <a href="{% url 'check-edit-address' i.id %}" data-bs-toggle="tooltip" data-placement="top" title="" data-bs-original-title="Edit">
                                                                     <i class="bx bx-pencil font-size-16"></i>
                                                                 </a>
                                                             </div>
@@ -88,7 +88,7 @@
                                                 </div>
                                                 {% endfor %}
                                                 <div class="mb-3">
-                                                    <button type="button" class="site-btn" onclick="location.href='{% url 'check_add_address' %}'">Add New Address</button>
+                                                    <button type="button" class="site-btn" onclick="location.href='{% url 'check-add-address' %}'">Add New Address</button>
                                                 </div>
 
                                             </div>

@@ -48,7 +48,7 @@ class AddCart(View):
             messages.warning(request, "Select a size")
             return redirect("shopdetails", id)
 
-        existing_cart_item = CartItem.objects.filter(cart=cart, product=product)
+        existing_cart_item = CartItem.objects.filter(cart=cart, product_size_color=size_instance)
         if existing_cart_item:
             messages.warning(request, "Item already in the cart")
             return redirect("viewcart")
@@ -268,12 +268,12 @@ def add_coupon(request):
             error_message = validate_coupon(title,code,end_date,start_date,now_date,quantity,min_amount,discount_amount)
             if error_message:
                 messages.error(request,error_message)
-                return redirect('add_coupon')
+                return redirect('add-coupon')
 
             
             if Coupon.objects.filter(code=code).exists():
                 messages.error(request,f'Coupon code "{code}" is already exists!')
-                return redirect('add_coupon')
+                return redirect('add-coupon')
             
             obj = Coupon(
                 title=title,
@@ -287,7 +287,7 @@ def add_coupon(request):
             )
             obj.save()
             messages.success(request, f'Coupon "{title}" added successfuly')
-            return redirect("view_coupons")
+            return redirect("view-coupons")
 
         return render(request, "add_coupon.html")
     
@@ -314,7 +314,7 @@ def check_update_address(request, address_id):
         error_message  = validate_address(name, address, house_no, city, state, country, pincode)
         if error_message:
             messages.error(request, error_message)
-            return redirect('edit_adress', address_id=address_id)
+            return redirect('check-edit-address', address_id=address_id)
 
         address_obj.name = name
         address_obj.address = address
@@ -329,6 +329,7 @@ def check_update_address(request, address_id):
         return redirect('checkout')
 
     return render(request, 'edit_check_address.html', {'address': address_obj})
+
 def view_admin_coupon(request):
     coupons=Coupon.objects.all()
     return render(request,'view_coupons.html',{'coupons':coupons})
@@ -348,7 +349,7 @@ def check_add_address(request):
         error_message  = validate_address(name, address, house_no, city, state, country, pincode)
         if error_message:
             messages.error(request, error_message)
-            return redirect('check_add_address')
+            return redirect('check-add-address')
         address_obj = Address.objects.create(
             user=user,
             name=name,
@@ -389,12 +390,12 @@ def edit_coupon(request, id):
         error_message = validate_coupon(title,code,end_date,start_date,now_date,quantity,min_amount,discount_amount)
         if error_message:
                 messages.error(request,error_message)
-                return redirect('edit_coupon', id=coupon.id)
+                return redirect('edit-coupon', id=coupon.id)
 
         
         if Coupon.objects.filter(code__exact=code).exclude(id=coupon.id).exists():
             messages.error(request, f'Coupon code "{code}" already exists!')
-            return redirect('edit_coupon', id=coupon.id)
+            return redirect('edit-coupon', id=coupon.id)
 
         coupon.title = title
         coupon.code = code
@@ -407,7 +408,7 @@ def edit_coupon(request, id):
         coupon.save()
 
         messages.success(request, f'Coupon "{title}" updated successfully')
-        return redirect("view_coupons")
+        return redirect("view-coupons")
 
     context = {
         'coupon': coupon
@@ -423,6 +424,6 @@ def coupon_is_active(request,id):
     else:
         coupon.active=True
         coupon.save()
-    return redirect("view_coupons")
+    return redirect("view-coupons")
 
 

@@ -1,23 +1,15 @@
 from datetime import date, timedelta, timezone, datetime
-import http
 from django.views.decorators.csrf import csrf_protect,csrf_exempt
-import json
 from django.template.loader import render_to_string
-import re
-import time
 import uuid
 from django.core.paginator import Paginator
-
-from .validations import is_valid_email,validate_mobile_number
+from .validations import is_valid_email,validate_mobile_number,user_validation
 from django.core.exceptions import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
-import random
 from django.shortcuts import render, HttpResponse
 from django.contrib import messages
 from django.db.models import Q
-
 from django.shortcuts import render, redirect
-
 from shopifyproject import settings
 from .models import *
 from django.contrib.auth import authenticate, login, logout as authlogout
@@ -76,41 +68,12 @@ def user_signup(request):
             number = request.POST.get("number")
             email = request.POST.get("email")
             refarel=request.POST.get("referral_code")
-
-            if CustomUser.objects.filter(username=username).exists():
-                messages.error(request, "The username is already taken")
+            
+            error_message = user_validation(username,email,number,password)
+            if error_message:
+                messages.error(request, error_message)
                 return redirect("SignUp")
-
-            elif not username.strip():
-                messages.error(request, "The username is not valid")
-                return redirect("SignUp")
-
-            elif CustomUser.objects.filter(email=email).exists():
-                messages.error(request, "The email is already taken")
-                return redirect("SignUp")
-            elif not is_valid_email(email):
-                messages.error(request, "The email is not valid")
-                return redirect("SignUp")
-            elif not validate_mobile_number(number):
-                messages.error(request, "The Mobail number is not valid")
-                return redirect("SignUp")
-            elif len(password) < 6:
-                messages.error(request, "The password should be at least 6 characters")
-                return redirect("SignUp")
-
-            elif not any(char.isupper() for char in password):
-                messages.error(
-                    request, "Password must contain at least one uppercase letter"
-                )
-                return redirect("SignUp")
-            elif not any(char.islower() for char in password):  # Corrected condition
-                messages.error(
-                    request, "Password must contain at least one lowercase letter"
-                )
-                return redirect("SignUp")
-            elif not any(char.isdigit() for char in password):
-                messages.error(request, "Password must contain at least one digit")
-                return redirect("SignUp")
+            
 
             else:
                 request.session["name"] = username
@@ -381,15 +344,6 @@ def filterd(request):
         
         return redirect('shop')
 
-
-
-    
-
-# def selected_category(request,category):
-#       sele
-#       if category not
-#       return selected_list
-
 @never_cache
 @login_required(login_url="login")
 def view_address(request):
@@ -535,12 +489,6 @@ def Remove_wishlist(request, id):
 
 def wishlist_to_cart(request, id,size_id):
     if request.method == 'POST':
-       
-        
-        
-
-        
-
         product = get_object_or_404(Color_products, id=id)
         
         size_instance = get_object_or_404(size_variant, id=size_id)
@@ -614,9 +562,10 @@ def user_order(request):
 def view_order_details(request, id):
     data = OrderProduct.objects.filter(order__id=id)
     order_products = OrderProduct.objects.filter(order__id=id).exclude(status__in=['Cancelled', 'Returned'])
+    order_count = True if order_products.count()>0 else False
     order = Order.objects.get(id=id)
     totel_amount=order_products.annotate(totel_price=F('quantity')* F('price')).aggregate(totel_sum=Sum('totel_price'))['totel_sum'] or 0
-    context = {"order": order,'totel_amount':totel_amount}
+    context = {"order": order,'totel_amount':totel_amount,'is_order_count':order_count}
 
     return render(request, "view_order_details.html", context)
 
@@ -747,18 +696,21 @@ def myrefrals(request):
 
 
 def search_shop(request):
-    input=request.GET.get("Search",'').strip()
+    search=request.GET.get("Search",'').strip()
+    print(search)
 
     products=Color_products.objects.filter(is_listed=True)
 
-    if input:
-        products=products.filter(Q(product__name__icontains=input)| Q(product__name__iexact=input))
+    if search :
+        
+        products=products.filter(Q(product__name__icontains=search)).distinct('product')
+    
 
     categories = Catagory.objects.filter(is_listed=True)
     brands = Brand.objects.filter(is_listed=True)
 
     context = {
-                "products": products,
+                "page_obj": products,
                 "category": categories,
                 "brand": brands,
     }
@@ -838,9 +790,12 @@ def generate_invoice(request, order_id):
     order = get_object_or_404(Order, id=order_id)
 
     order_products = OrderProduct.objects.filter(order__id=order_id).exclude(status__in=['Cancelled', 'Returned'])
+    print(order_products)
+    order_status = not order_products.exists()
+    print(order_status)
     
     totel_amount=order_products.annotate(totel_price=F('quantity')* F('price')).aggregate(totel_sum=Sum('totel_price'))['totel_sum'] or 0
-    html_string = render_to_string('invoice_template.html', {'order': order,'totel_amount':totel_amount})
+    html_string = render_to_string('invoice_template.html', {'order': order,'totel_amount':totel_amount,'order_status':order_status})
 
     html = HTML(string=html_string)
     pdf = html.write_pdf()

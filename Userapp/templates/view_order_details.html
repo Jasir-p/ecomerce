@@ -126,6 +126,7 @@
                         </tbody>
                     </table>
                 </div>
+                {% if is_order_count %}
                     <table>
                     <tr class="total-row">
                         <td colspan="4" class="total-amount">Total Amount:</td>
@@ -146,6 +147,7 @@
                         <td colspan="3">{{ order.total_amount }}</td>
                     </tr>
                 </table>
+                {% endif %}
                 <a href="{% url 'generate_invoice' order.id %}" class="btn-invoice">Download Invoice</a>
             </div>
         </div>
